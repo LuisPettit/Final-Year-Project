@@ -1,8 +1,8 @@
+# script to get the followers of a provided target account
+
 import tweepy
-import time
 import sys
 
-start_time = time.time()
 
 #Twitter API credentials
 consumer_key = "0gfYdGZSFqVyR375RzP8JNtbm"
@@ -24,28 +24,20 @@ api = tweepy.API(auth,wait_on_rate_limit=True, wait_on_rate_limit_notify=True
 
 users = []
 
-# used to print account pairs within jupyter
-script_list = []
 
-accounts_to_check = ['fearghuswilson']
-
-f = open('fearghus.txt', 'r')
-xx = f.read().splitlines()
-f.close()
-
-for x in xx:
-    accounts_to_check.append(x)
+# targte user
+accounts_to_check = ['FoxNews']
 
 page_count = 0
 
 for account in accounts_to_check:
-    
+    # handles target account edge cases
     if (api.get_user(screen_name = account)._json['protected'] == True) or (api.get_user(screen_name = account)._json['followers_count'] > 7000):
         print("Skipped %s for being private or exceeding followers limit" % account)
         continue
         
     else:
-    
+        # gets followers of target account in increments of 200
         for user in tweepy.Cursor(api.followers, screen_name = account, count=200).pages():
     
             max_calls = False
@@ -56,10 +48,7 @@ for account in accounts_to_check:
         
         
                 users.append(user[i]._json['screen_name'])
-        
-                #if user[i]._json['screen_name'] not in accounts_to_check:
-                #    accounts_to_check.append(user[i]._json['screen_name'])
-        
+            
                 # used to handle account pairs within jupyter
                 temp_list = []
                 temp_list.append(account)
@@ -67,12 +56,13 @@ for account in accounts_to_check:
                 script_list.append(temp_list)
                 temp_list = []
         
-    
+            # the Twitter API followers() method limited to 15 calls per 15 minutes
+            # counter prevents call rate being exceeded
             if page_count%15==0:
             
                 max_calls = True
-        
-                with open('ferg_test3.txt', 'a') as f:
+                # saves intermediate set of followers in txt file
+                with open('FoxNews_follow_pairs.txt', 'a') as f:
                     for peeps in users:
                         f.write("[%s, %s]\n" % (account,peeps))
                 f.close()
@@ -86,9 +76,9 @@ for account in accounts_to_check:
                     time.sleep(1)
         
                 sys.stdout.write("\rComplete!            \n")
-        
+        # saves final set of followers
         if max_calls == False:
-            with open('ferg_test3.txt', 'a') as f:
+            with open('FoxNews_follow_pairs.txt', 'a') as f:
                 for peeps in users:
                     f.write("[%s, %s]\n" % (account,peeps))
             f.close()
