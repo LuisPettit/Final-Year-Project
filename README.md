@@ -1,12 +1,12 @@
 # Final Year Project
 
-Name: Luis Herrera-Pettit
+**Name:** Luis Herrera-Pettit
 
-Supervisor: Michael O'Mahony
+**Supervisor:** Michael O'Mahony
 
-Project Title: Identifying Bots on Twitter
+**Project Title:** Identifying Bots on Twitter
 
-Decription
+**Decription**
 
 The repo is separated into three folders:
 * The Classification Experiments folder outlines the work involved in comparing classifiers and evaluating their performance.
