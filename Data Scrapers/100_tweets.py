@@ -1,22 +1,25 @@
+# script used to extend database by counting of tweet sources 
+# for 100 most recent tweets for known accounts
+
 import tweepy
 import time
 import sys
-
 import sqlite3
 import pandas as pd
-# Create your connection.
+# create connection to db file
 cnx = sqlite3.connect('bots_working.db')
 
+# read data into dataframes that correspond to classification labels
 df_humans = pd.read_sql_query("SELECT username FROM humans_accounts", cnx)
 df_bots = pd.read_sql_query("SELECT username FROM twitter_users", cnx)
 
 cnx.close()
 
-#df_humans['label'] = 1
 
 bot_usernames = df_bots['username'].tolist()
 human_usernames = df_humans['username'].tolist()
 
+# save bot usernames in txt file
 with open('bots_source.txt', 'w') as f:
     for bot in bot_usernames:
         f.write("%s\n" % bot)
@@ -34,7 +37,8 @@ auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_key, access_secret)
 api = tweepy.API(auth)
 
-def luis(alltweets, p, test, iPhone,iPad,Android,Web_App,Web_Client,Websites,Other):
+# function that iterates through maximum of 100 most recent tweets
+def iterate_tweets(alltweets, p, test, iPhone,iPad,Android,Web_App,Web_Client,Websites,Other):
     for tweet in alltweets:
         if p<100:
             try:
@@ -42,9 +46,8 @@ def luis(alltweets, p, test, iPhone,iPad,Android,Web_App,Web_Client,Websites,Oth
             except:
                 
                 sss = tweet._json['source'][tweet._json['source'].find(">")+1 : tweet._json['source'].find("</a")]
-                
-                #print(sss)
-                
+               
+               # increments counter for tweets source 
                 if sss == 'Twitter for iPhone':
                     iPhone += 1
                 elif sss =='Twitter for Android':
@@ -60,7 +63,7 @@ def luis(alltweets, p, test, iPhone,iPad,Android,Web_App,Web_Client,Websites,Oth
                 else:
                     Other += 1
                     
-                outtweets = [tweet.user.screen_name , iPhone,iPad,Android,Web_App,Web_Client,Websites,Other]#tweet._json['source'][tweet._json['source'].find(">")+1 : tweet._json['source'].find("</a")]]
+                outtweets = [tweet.user.screen_name , iPhone,iPad,Android,Web_App,Web_Client,Websites,Other]
                 test.append(outtweets)
                 
                 p += 1
@@ -76,8 +79,7 @@ Other = 0
 
 fail_list = []
     
-with open('luis.txt', 'r') as file:
-    user_ids = file.read().splitlines()
+bot_usernames
     
     list_length = len(user_ids)
     
@@ -86,7 +88,8 @@ api_counter = 0
 counter = 1
 label_count = 0
 
-for u_id in user_ids:
+# iterate through all bot usernames in db file
+for name in bot_usernames:
         
     start_time = time.time()
     
@@ -97,15 +100,13 @@ for u_id in user_ids:
         p=0
     
         #make initial request for most recent tweets (200 is the maximum allowed count)
-        new_tweets = api.user_timeline(screen_name = u_id, count=200)
+        new_tweets = api.user_timeline(screen_name = name, count=200)
         api_counter += 1
 
         #save most recent tweets
         alltweets.extend(new_tweets)
 
-        val = luis(alltweets, p, test, iPhone,iPad,Android,Web_App,Web_Client,Websites,Other)
-                
-        #print('First tweets collected %d' % val)
+        val = iterate_tweets(alltweets, p, test, iPhone,iPad,Android,Web_App,Web_Client,Websites,Other)
 
         if val >= 100:
             pass
@@ -120,7 +121,7 @@ for u_id in user_ids:
                 p=0
                 test = []
 
-                new_tweets = api.user_timeline(screen_name = u_id,count=200,max_id=oldest)
+                new_tweets = api.user_timeline(screen_name = name,count=200,max_id=oldest)
                 api_counter += 1
         
                 alltweets.extend(new_tweets)
@@ -128,9 +129,7 @@ for u_id in user_ids:
                 #update the id of the oldest tweet less one
                 oldest = alltweets[-1].id - 1
         
-                p = luis(alltweets, p, test, iPhone,iPad,Android,Web_App,Web_Client,Websites,Other)
-            
-                #print('within WHILE loop %d' % p)
+                p = iterate_tweets(alltweets, p, test, iPhone,iPad,Android,Web_App,Web_Client,Websites,Other)
         
 
         temp_df = pd.DataFrame(data=test, columns = ['screen_name', 'Twitter for iPhone', 'Twitter for Andriod', 'Twitter for iPad', 'Twitter for Web Client', 'Twitter for Websites', 'Twitter for Web App', 'Other']) 
@@ -142,16 +141,15 @@ for u_id in user_ids:
 
     except:
         print("User not available:%d\t--- %s seconds ---\tAPI counter=%d" % (counter, time.time() - start_time, api_counter))
-        #print('User not available - append to list')
-        fail_list.append(u_id)
+        fail_list.append(name)
         
-    #print("%d\t--- %s seconds ---\tAPI counter=%d" % (counter, time.time() - start_time, api_counter))
     counter += 1
     
     user_ids = user_ids[1:list_length]
     list_length = list_length - 1
     
-    with open('luis.txt', 'r+') as f:
-        for item in user_ids:
-            f.write("%s\n" % item)
-            f.truncate()
+# output data in txt file
+with open('tweet_source.txt', 'r+') as f:
+for item in user_ids:
+    f.write("%s\n" % item)
+    f.truncate()
