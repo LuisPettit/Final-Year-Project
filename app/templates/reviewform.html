@@ -1,0 +1,42 @@
+<!doctype html>
+
+<html>
+<head>
+ <title>Twitter Account Classification</title>
+</head>
+
+<body>
+	<h2>Please enter a Twitter account:</h2>
+	{% from "_formhelpers.html" import render_field %}
+	<form method=post action="/results">
+		<dl>
+		{{ render_field(form.moviereview, cols='30', rows='1') }}
+		</dl>
+		<div>
+			<input type=submit value='Analyze account' name='submit_btn'>
+		</div>
+	</form>
+	<!-- newly added for followers!-->
+	<form method=post action="/followers">
+		<dl>
+		{{ render_field(form.moviereview, cols='30', rows='1') }}
+		</dl>
+		<div>
+			<input type=submit value='Check followers' name='submit_btn'>
+		</div>
+	</form>
+	
+	<!-- newly added for graph!-->
+	<form method=post action="/graph">
+		<dl>
+		{{ render_field(form.moviereview, cols='30', rows='1') }}
+		</dl>
+		<div>
+			<input type=submit value='Graph' name='submit_btn'>
+		</div>
+	</form>
+	
+	
+</body>
+
+</html>
