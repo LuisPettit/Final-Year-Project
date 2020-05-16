@@ -1,3 +1,5 @@
+# script to extend dataset by including lexical diversity of target account based on 100 most recent tweets
+
 import tweepy
 import time
 import sys
