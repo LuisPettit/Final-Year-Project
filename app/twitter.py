@@ -759,7 +759,7 @@ class account_name(Form):
 def index():
     print('test')
     form = account_name(request.form)
-    return render_template('reviewform_updated.html', form=form)
+    return render_template('twitterform_updated.html', form=form)
 
 @app.route('/graph', methods=['POST'])
 def graph():
@@ -916,7 +916,7 @@ def results():
     
     
     
-    return render_template('reviewform_updated.html', prediction_text = df.to_html(index=False))
+    return render_template('twitterform_updated.html', prediction_text = df.to_html(index=False))
                            #prediction_text='The Twitter account is"{0}" - (probability of bot: "{1}")\\n. Account Score: "{2}".\\n Activity Score: "{3}".\\n Interactiveness Score: "{4}".\\n Tweet Source Score: "{5}"' .format(y, round(proba*100, 2), round(account_score*100, 2), round(sentiment_score*100, 2), round(activity_score*100, 2), round(interactiveness_score*100, 2), round(tweet_source_score*100, 2)))
                           
     
