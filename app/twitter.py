@@ -62,7 +62,7 @@ def sentiment_scores(tweet):
     
     return sentiment_dict
     
-def luis(alltweets, p, test, tweet_text):#, iPhone,iPad,Android,Web_App,Web_Client,Websites,Other):
+def iterate_tweets(alltweets, p, test, tweet_text):#, iPhone,iPad,Android,Web_App,Web_Client,Websites,Other):
     
     global iPhone
     global iPad 
@@ -112,7 +112,7 @@ def luis(alltweets, p, test, tweet_text):#, iPhone,iPad,Android,Web_App,Web_Clie
                 outtweets = [tweet.user.screen_name , tweet._json['user']['id_str'], tweet.id, tweet.created_at, tweet._json['text'], sentiment_dict['neg'], sentiment_dict['neu'], sentiment_dict['pos'], len(tweet._json['entities']['hashtags']), len(tweet.entities['user_mentions']), tweet._json['favorite_count'], tweet._json['retweet_count'], len(tweet._json['entities']['urls']), iPhone,iPad,Android,Web_App,Web_Client,Websites,Other]
                 test.append(outtweets)
                 p += 1
-    #print('luis exited')
+
     return p, tweet_text
 
 def score(tweet_text):
@@ -286,8 +286,7 @@ def tweets(account, function, tweet_text):
                 #save most recent tweets
                 alltweets.extend(new_tweets)
 
-                #print('first luis entered')
-                val, tweet_text = luis(alltweets, p, test, tweet_text)
+                val, tweet_text = iterate_tweets(alltweets, p, test, tweet_text)
 
                 if val >= 100:
                     pass
@@ -308,8 +307,7 @@ def tweets(account, function, tweet_text):
             
                         #update the id of the oldest tweet less one
                         oldest = alltweets[-1].id - 1
-                        #print('while luis entered')
-                        p, tweet_text = luis(alltweets, p, test, tweet_text)
+                        p, tweet_text = iterate_tweets(alltweets, p, test, tweet_text)
                         
             else:
                 
@@ -353,7 +351,6 @@ def tweets(account, function, tweet_text):
             df['Twitter_for_Web_App'] = df['Twitter_for_Web_App'].astype('float64')
             df['Other'] = df['Other'].astype('float64')
 
-            #print('prediction entered')
             p_label, overall_score, account_score, sentiment_score, activity_score, interactiveness_score, tweet_source_score = prediction(df, account, tweet_text)
             
             if p_label == 0:
@@ -362,8 +359,7 @@ def tweets(account, function, tweet_text):
                 predicted_label = 'Bot'
                 
             if function == 'friends':
-                
-                #print('rates entered')
+
                 retweet_rate, tweet_rate = rates(account)
                 
                 return retweet_rate, tweet_rate, predicted_label
@@ -655,15 +651,9 @@ def json_graph(account):#, x):
         json_dict['links'].append(temp_links)
         
         friend_size += len(friends_list)
-            
-      
-            
-    
-    #name = 'static//' + x + '.json'    
-    print('fucking wooo000rks')
+
         
     with open('static/json_file.json', 'w') as json_file:
-    #with open(name, 'w') as json_file:
         json.dump(json_dict, json_file)
     json_file.close()
     
@@ -677,8 +667,6 @@ def check(name, dictionary):
         if name in dictionary['nodes'][i]['screen_name']:
             existing_node_id = dictionary['nodes'][i]['node_id']
             exists = True
-        ##else:
-           ## print("Distinct node value")
 
     return existing_node_id, exists
     
@@ -694,7 +682,7 @@ def rates(account):
 
     tweets = []
     
-    tmpTweets = []#api.user_timeline(screen_name = account, exclude_replies= True)
+    tmpTweets = []
     
     for tweet in tweepy.Cursor(api.user_timeline,screen_name = account, count = 200, exclude_replies= True).items():
         #print(tweet._json['text'])
@@ -764,25 +752,13 @@ auth.set_access_token(access_key, access_secret)
 api = tweepy.API(auth,wait_on_rate_limit=True, wait_on_rate_limit_notify=True
                  , retry_count=10, retry_delay=5, retry_errors=set([503]))
 
-class ReviewForm(Form):
-    moviereview = TextAreaField('', [validators.DataRequired(), validators.length(max=15)])
-#@app.after_request
-#def add_header(r):
-#    """
-#    Add headers to both force latest IE rendering engine or Chrome Frame,
-#    and also to cache the rendered page for 10 minutes.
-#    """
-#    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-#    r.headers["Pragma"] = "no-cache"
-#    r.headers["Expires"] = "0.1"
-#    r.headers['Cache-Control'] = 'public, max-age=0'
-#    return r
+class account_name(Form):
+    t_account = TextAreaField('', [validators.DataRequired(), validators.length(max=15)])
 
 @app.route('/')
 def index():
     print('test')
-    form = ReviewForm(request.form)
-    #return render_template('reviewform.html', form=form)
+    form = account_name(request.form)
     return render_template('reviewform_updated.html', form=form)
 
 @app.route('/graph', methods=['POST'])
@@ -796,7 +772,7 @@ def graph():
 	f.close()
     
       
-	review = 'fearghuswilson'
+	u_name = 'fearghuswilson'
 	
 	tmp = []
 	final_human = []
@@ -820,19 +796,15 @@ def graph():
 	humans_num = len(final_human)
 	bots_num = len(final_bot)
     
-	if review in final_human:
+	if u_name in final_human:
 		humans_num = humans_num - 1
         
-	elif review in final_bot:
+	elif u_name in final_bot:
 		bots_num = bots_num - 1
         
 	df_fox_human = pd.DataFrame(data=final_human, columns=['Account', 'Classification'])
 	df_fox_bot = pd.DataFrame(data=final_bot, columns=['Account', 'Classification'])
-    
-	#datat_human = pd.DataFrame(data=result_human, columns=['Account', 'Classification'])
-	#datat_bot = pd.DataFrame(data=result_bot, columns=['Account', 'Classification'])
-        
-        
+
 	return render_template('fox_example.html',humans=humans_num,bots=bots_num,table1 = df_fox_human.to_html(classes='male', index=False), table2 = df_fox_bot.to_html(classes='female', index=False), tables=[df_fox_human.to_html(classes='male', index=False), df_fox_bot.to_html(classes='female', index=False)]) 
 
 
@@ -846,7 +818,7 @@ def fox_example():
         foxnews = json.load(f)
     f.close()
     
-    review = 'FoxNews'
+    u_name = 'FoxNews'
 
     tmp = []
     final_human = []
@@ -870,19 +842,15 @@ def fox_example():
     humans_num = len(final_human)
     bots_num = len(final_bot)
     
-    if review in final_human:
+    if u_name in final_human:
         humans_num = humans_num - 1
         
-    elif review in final_bot:
+    elif u_name in final_bot:
         bots_num = bots_num - 1
         
     df_fox_human = pd.DataFrame(data=final_human, columns=['Account', 'Classification'])
     df_fox_bot = pd.DataFrame(data=final_bot, columns=['Account', 'Classification'])
     
-    #datat_human = pd.DataFrame(data=result_human, columns=['Account', 'Classification'])
-    #datat_bot = pd.DataFrame(data=result_bot, columns=['Account', 'Classification'])
-        
-        
     return render_template('fox_example.html',humans=humans_num,bots=bots_num,table1 = df_fox_human.to_html(classes='male', index=False), table2 = df_fox_bot.to_html(classes='female', index=False), tables=[df_fox_human.to_html(classes='male', index=False), df_fox_bot.to_html(classes='female', index=False)]) 
 
 
@@ -896,7 +864,7 @@ def msnbc_example():
         msnbc = json.load(f)
     f.close()
     
-    review = 'MSNBC'
+    u_name = 'MSNBC'
 
     tmp = []
     final_human = []
@@ -919,19 +887,15 @@ def msnbc_example():
     humans_num = len(final_human)
     bots_num = len(final_bot)
     
-    if review in final_human:
+    if u_name in final_human:
         humans_num = humans_num - 1
         
-    elif review in final_bot:
+    elif u_name in final_bot:
         bots_num = bots_num - 1
         
     df_fox_human = pd.DataFrame(data=final_human, columns=['Account', 'Classification'])
     df_fox_bot = pd.DataFrame(data=final_bot, columns=['Account', 'Classification'])
-    
-    #datat_human = pd.DataFrame(data=result_human, columns=['Account', 'Classification'])
-    #datat_bot = pd.DataFrame(data=result_bot, columns=['Account', 'Classification'])
-        
-        
+  
     return render_template('msnbc_example.html',humans=humans_num,bots=bots_num,table1 = df_fox_human.to_html(classes='male', index=False), table2 = df_fox_bot.to_html(classes='female', index=False), tables=[df_fox_human.to_html(classes='male', index=False), df_fox_bot.to_html(classes='female', index=False)]) 
 
 
@@ -939,13 +903,10 @@ def msnbc_example():
 def results():
     
     tweet_text = []
-    
-    #form = ReviewForm(request.form)
-    #if request.method == 'POST' and form.validate():
-    #    review = request.form['moviereview']
-    review =request.get_data(as_text=True)[8:]
-    print(review)
-    y, proba, account_score, sentiment_score, activity_score, interactiveness_score, tweet_source_score = tweets(review, 'result', tweet_text)
+
+    u_name =request.get_data(as_text=True)[8:]
+    print(u_name)
+    y, proba, account_score, sentiment_score, activity_score, interactiveness_score, tweet_source_score = tweets(u_name, 'result', tweet_text)
        
     
     
