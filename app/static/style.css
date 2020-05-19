@@ -1,0 +1,23 @@
+table.dataframe, .dataframe th, .dataframe td {
+  border: none;
+  border-bottom: 1px solid #C8C8C8;
+  border-collapse: collapse;
+  text-align:left;
+  padding: 7px;
+  margin-bottom: 40px;
+}
+
+.male th {
+    background-color: #77dd77;
+    color: black;
+}
+
+.female th {
+    background-color: #FF0000;
+    color: black;
+}
+
+tr:nth-child(odd)		{ background-color:#eee; color: black;}
+tr:nth-child(even)	{ background-color:#fff; color: black;}
+
+tr:hover            { background-color: #ffff99;}

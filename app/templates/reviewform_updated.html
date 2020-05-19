@@ -1,0 +1,75 @@
+<html >
+<head>
+  <meta charset="UTF-8">
+  <title>Twitter Bot Identification</title>
+  <link href='https://fonts.googleapis.com/css?family=Pacifico' rel='stylesheet' type='text/css'>
+<link href='https://fonts.googleapis.com/css?family=Arimo' rel='stylesheet' type='text/css'>
+<link href='https://fonts.googleapis.com/css?family=Hind:300' rel='stylesheet' type='text/css'>
+<link href='https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="{{ url_for('static', filename='style_result.css') }}">
+  
+</head>
+<style>
+
+#wrapper {
+  text-align:center;
+  border:1px solid #7F7F7F;
+  width:150px;
+  margin:25px auto;
+  padding:25px;
+  background-color:#E3E4E4;
+}
+#myTimer {
+  font:64px Tahoma bold;
+  padding:20px;
+  display:block;
+}
+button {
+  width:125px;
+  padding:10px;
+}
+.btnEnable {
+  background-color:#E6F9D2;
+  border:1px solid #97DE4C;
+  color:#232323;
+  cursor:pointer;
+}
+.btnDisable {
+  background-color:#FCBABA;
+  border:1px solid #DD3939;
+  color:#232323;
+  cursor:wait;
+}
+</style>
+
+<script type="text/javascript">
+        function zoom() {
+            document.body.style.zoom = "75%" 
+        }
+</script>
+
+<body onload="zoom()">
+ <div class="login">
+	<h1>Twitter Bot Identification</h1>
+	 
+	 
+	<form method="POST" name="form1">
+		<input type="text" formaction="{{ url_for('results')}}" name="twitter" placeholder="Enter a Twitter account username" required="required" />
+		<button type="submit" class="btn btn-primary btn-block btn-large" formaction="{{ url_for('results')}}"> <!--onclick = countDown()-->Predict</button>
+		<button type='submit' class='btn btn-primary btn-block btn-large' formaction='{{ url_for("graph")}}'>Graph</button>
+
+	</form>
+
+
+   <br>
+   <br>
+</head>
+
+
+	<p style="position: absolute; top: 300px; left: 32.5px;">{{ prediction_text|safe }} </p>
+ </div>
+ 
+
+
+</body>
+</html>
