@@ -16,3 +16,5 @@ The repo is separated into three folders:
 * The app folder contains the all the required files to run web app to run. This includes the driver python script itself but also static data files, html and css files, all of which are necessary for the web app.
 
 * The Visualisation Testing folder contains a script that explores the initial approach used to construct the network graph.
+
+* **Important:** The pre-trained classifier files are too large to store on GitHub. They can be downloaded from Google Drive via the access link provided on the coverpage of the Final Report. These files should be placed in a new folder called 'joblib' within the 'app' directory.
