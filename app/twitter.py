@@ -18,7 +18,7 @@ import re
 
 # Section below loads pre-trained classifiers and assumes files are stored locally within joblib folder.
 # Classifier files are too large to be stored on GitHub but can be downloaded from Google Drive using the 
-# following link: https://drive.google.com/open?id=1dCRuEHzK--d3iHvAnVWYGry9i6XOzu8j
+# link provided in the Final Report.
    
 ensemble = joblib.load("joblib//ensemble_classifier.sav")
 account_classifier = joblib.load("joblib//account_classifier.sav")
