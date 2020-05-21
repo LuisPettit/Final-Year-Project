@@ -19,6 +19,7 @@ import re
 # Section below loads pre-trained classifiers and assumes files are stored locally within joblib folder.
 # Classifier files are too large to be stored on GitHub but can be downloaded from Google Drive using the 
 # following link: https://drive.google.com/open?id=1dCRuEHzK--d3iHvAnVWYGry9i6XOzu8j
+   
 ensemble = joblib.load("joblib//ensemble_classifier.sav")
 account_classifier = joblib.load("joblib//account_classifier.sav")
 sentiment_classifier = joblib.load("joblib//sentiment_classifier.sav")
@@ -34,7 +35,6 @@ target_name = ''
 target_screen_name = ''
 target_name = ''
 target_label = ''
-predict_button = False
 
 def sentiment_scores(tweet): 
   
@@ -46,7 +46,7 @@ def sentiment_scores(tweet):
     
     return sentiment_dict
     
-def iterate_tweets(alltweets, p, test, tweet_text):
+def luis(alltweets, p, test, tweet_text):
     
     global iPhone
     global iPad 
@@ -70,32 +70,34 @@ def iterate_tweets(alltweets, p, test, tweet_text):
             try:
                 t = tweet.retweeted_status
             except:
-                # Calculate sentiment scores for given tweet
+                
+				# Calculate sentiment scores for given tweet
                 sentiment_dict = sentiment_scores(tweet._json['text'])
                 
                 tweet_text.append(tweet._json['text'])
                 
                 sss = tweet._json['source'][tweet._json['source'].find(">")+1 : tweet._json['source'].find("</a")]
                 
-				# Increment corresponding counter based on source of tweet
-				if sss == 'Twitter for iPhone':
+				# Increment corresponding counter based on source of tweet				
+                if sss == 'Twitter for iPhone':
                     iPhone += 1
-				elif sss =='Twitter for Android':
+                elif sss =='Twitter for Android':
                     iPad += 1
-				elif sss =='Twitter for iPad':
+                elif sss =='Twitter for iPad':
                     Android += 1
-				elif sss =='Twitter Web Client':
+                elif sss =='Twitter Web Client':
                     Web_App += 1
-				elif sss =='Twitter for Websites':
+                elif sss =='Twitter for Websites':
                     Web_Client += 1
-				elif sss =='Twitter Web App':
+                elif sss =='Twitter Web App':
                     Websites += 1
-				else:
+                else:
                     Other += 1
                 
-				outtweets = [tweet.user.screen_name , tweet._json['user']['id_str'], tweet.id, tweet.created_at, tweet._json['text'], sentiment_dict['neg'], sentiment_dict['neu'], sentiment_dict['pos'], len(tweet._json['entities']['hashtags']), len(tweet.entities['user_mentions']), tweet._json['favorite_count'], tweet._json['retweet_count'], len(tweet._json['entities']['urls']), iPhone,iPad,Android,Web_App,Web_Client,Websites,Other]
-				test.append(outtweets)
-				p += 1
+                outtweets = [tweet.user.screen_name , tweet._json['user']['id_str'], tweet.id, tweet.created_at, tweet._json['text'], sentiment_dict['neg'], sentiment_dict['neu'], sentiment_dict['pos'], len(tweet._json['entities']['hashtags']), len(tweet.entities['user_mentions']), tweet._json['favorite_count'], tweet._json['retweet_count'], len(tweet._json['entities']['urls']), iPhone,iPad,Android,Web_App,Web_Client,Websites,Other]
+                test.append(outtweets)
+                p += 1
+				
     return p, tweet_text
 
 def score(tweet_text):
@@ -109,6 +111,7 @@ def score(tweet_text):
 	# Calculate lex. diversity
     if len(words_n_nums) == 0:
         val = 0
+
     else:
         val = len(set(words_n_nums)) / len(words_n_nums)
         
@@ -116,11 +119,10 @@ def score(tweet_text):
 
 def prediction(df, account, tweet_text):
     
-    
-	try:
-		# Return account info 
+		# Return account info
 		result = api.get_user(screen_name = account)._json
         
+		# cal function to calculate lex. diversity
 		lex_score = score(tweet_text)
         
 		# Define current date and time
@@ -133,8 +135,8 @@ def prediction(df, account, tweet_text):
 		else:
 			result['location'] = 1
             
-		# Predicts using RF with all features
-		p_label = ensemble.predict([[
+		#predicts using RF with all features
+		p_label = ensemble.predict([[#result['id'],
 							result['location']
 							,age
 							,result['statuses_count']
@@ -161,7 +163,7 @@ def prediction(df, account, tweet_text):
         
 		global overall_score
         
-		overall_score = round(ensemble.predict_proba([[
+		overall_score = round(ensemble.predict_proba([[#result['id'],
 							result['location']
 							,age
 							,result['statuses_count']
@@ -185,7 +187,7 @@ def prediction(df, account, tweet_text):
 							,Web_Client
 							,Websites
 							,Other]])[0][1], 2)
-		# Probability of prediction using RF with all features
+		#probability of prediction using RF with all features
         
 		global account_score
 		account_score = round(account_classifier.predict_proba([[
@@ -194,7 +196,7 @@ def prediction(df, account, tweet_text):
 							,result['statuses_count']
 							,result['verified']
 							]])[0][1], 2)
-		# Probability of prediction using RF with account features
+		#probability of prediction using RF with account features
         
         
 		global sentiment_score
@@ -204,7 +206,7 @@ def prediction(df, account, tweet_text):
 							,df['Sentiment_pos'].sum()
 							,lex_score
 							]])[0][1], 2)
-		# Probability of prediction using RF with sentiment features
+		#probability of prediction using RF with sentiment features
         
 		global activity_score
 		activity_score = round(activity_classifier.predict_proba([[
@@ -213,7 +215,7 @@ def prediction(df, account, tweet_text):
 							,result['favourites_count']
 							,df['likes_count'].sum()
 							]])[0][1], 2)
-		# Probability of prediction using RF with activity features
+		#probability of prediction using RF with activity features
         
 		global interactiveness_score
 		interactiveness_score = round(interactiveness_classifier.predict_proba([[
@@ -222,7 +224,7 @@ def prediction(df, account, tweet_text):
 							,df['retweets_count'].sum()
 							,df['url_count'].sum()
 							]])[0][1], 2)
-		# Probability of prediction using RF with interactiveness features
+		#probability of prediction using RF with interactiveness features
         
 		global tweet_source_score
 		tweet_source_score = round(tweet_source_classifier.predict_proba([[
@@ -234,60 +236,47 @@ def prediction(df, account, tweet_text):
 							,Websites
 							,Other
 							]])[0][1], 2)
-		# Probability of prediction using RF with interactiveness features
+		#probability of prediction using RF with interactiveness features
         
         
 		pettit = p_label[0]
         
 		pettit = pettit.astype('float64')
 
+        
+        
 		return p_label, overall_score, account_score, sentiment_score, activity_score, interactiveness_score, tweet_source_score
-   
-            
-            
-def tweets(account, function, tweet_text):
+	
+def tweets(account, function, tweet_text, protected):
     
-	result = api.get_user(screen_name = account)._json
-	global target_followers_count
-	global target_friends_count
-	global target_id
-	global target_name
-	global target_screen_name
-	global predict_button
 	global target_label
     
-	target_followers_count = result['followers_count']
-	target_friends_count = result['friends_count']
-	target_id = result['id']
-	target_name = result['name']
-	target_screen_name = result['screen_name']
-    
-    
-	if (result['protected']) == False:
-    
-            # Initialize a list to hold all the tweepy Tweets
+	# gathers tweets for use unprotceted accounts
+	if protected == False:
+	
+            #initialize a list to hold all the tweepy Tweets
 			alltweets = []
 			test = []
 			p=0
     
-			# Make initial request for most recent tweets (200 is the maximum allowed count)
+			#make initial request for most recent tweets (200 is the maximum allowed count)
 			new_tweets = api.user_timeline(screen_name = account, count=200)
             
 			if len(new_tweets) != 0:
 
-				# Save most recent tweets
+				#save most recent tweets
 				alltweets.extend(new_tweets)
 
-				val, tweet_text = iterate_tweets(alltweets, p, test, tweet_text)
+				val, tweet_text = luis(alltweets, p, test, tweet_text)
 
 				if val >= 100:
 					pass
 
 				else:
-                    # Save the id of the oldest tweet less one
+                    #save the id of the oldest tweet less one
 					oldest = alltweets[-1].id - 1
 
-                    # Keep grabbing tweets until there are no tweets left to grab
+                    #keep grabbing tweets until there are no tweets left to grab
 					while len(new_tweets) > 0 and p < 99:
                     
 						p=0
@@ -297,9 +286,10 @@ def tweets(account, function, tweet_text):
         
 						alltweets.extend(new_tweets)
             
-                        # Update the id of the oldest tweet less one
+                        #update the id of the oldest tweet less one
 						oldest = alltweets[-1].id - 1
-						p, tweet_text = iterate_tweets(alltweets, p, test, tweet_text)
+                       
+						p, tweet_text = luis(alltweets, p, test, tweet_text)
                         
 			else:
                 
@@ -321,6 +311,7 @@ def tweets(account, function, tweet_text):
                 
 				outtweets = [account,0,0,0,0,0,0,0,0,0,0,0,0,iPhone,iPad,Android,Web_App,Web_Client,Websites,Other]
 				test.append(outtweets)
+
             
 			df = pd.DataFrame(data=test, columns=['screen_name', 'user_id', 'ID', 'Created_at', 'Text', 'Sentiment_neg', 'Sentiment_neu', 'Sentiment_pos', 'hashtag_count', 'mentions_count','likes_count','retweets_count','url_count', 'Twitter_for_iPhone' , 'Twitter_for_Android' ,'Twitter_for_iPad' ,'Twitter_for_Web_Client' ,'Twitter_for_Websites' ,'Twitter_for_Web_App' ,'Other'])
     
@@ -344,33 +335,39 @@ def tweets(account, function, tweet_text):
 				predicted_label = 'Human'
 			else:
 				predicted_label = 'Bot'
-
-			target_label = predicted_label
+			
+			if account == target_screen_name:
                 
+				target_label = predicted_label
+            
+			# returns variables used for network graph page of web app
 			if function == 'friends':
-
+                
 				retweet_rate, tweet_rate = rates(account)
                 
 				return retweet_rate, tweet_rate, predicted_label
            
+			# returns variables used for prediction page of web app
 			elif function == 'result':
-				predict_button = True
-				return target_screen_name, target_label, overall_score, account_score, sentiment_score, activity_score, interactiveness_score, tweet_source_score
+				return account, predicted_label, overall_score, account_score, sentiment_score, activity_score, interactiveness_score, tweet_source_score
         
-	else:
-		if function == 'result':
-			predict_button = True
-		target_label = 'Protected'
+	elif protected == True:
+
+		if account == target_screen_name:
+                
+			target_label = 'Protected'
+
+		predicted_label = 'Protected'
 	
 		print('User not available')
-		return target_screen_name, target_label, ' - ', ' - ', ' - ', ' - ', ' - ', ' - '
-    
+		return account, predicted_label, ' - ', ' - ', ' - ', ' - ', ' - ', ' - '
     
 def json_graph(account):
     
 	currentDirectory = os.getcwd()
 
 	file = '\static\json_file.json'
+	
 	# Check to see if static data file already exists
 	try:
 		
@@ -378,15 +375,15 @@ def json_graph(account):
 		print('exists - deleted')
 	except:
 		print('doesnt exist - proceed')
+    
 
+	protected = 0
+    
 	global counter
 	counter = 0
 
 	global target
 	target = 1
-    
-	global friend_size
-	friend_size = 0
     
 	tweet_text = []
 	result_human = []
@@ -397,6 +394,7 @@ def json_graph(account):
 	human_content = 0
 	bot_content = 0
 
+    
 	json_dict = {
         "directed" : True,
         "graph" : [],
@@ -426,7 +424,10 @@ def json_graph(account):
 	counter += 1
         
 	json_dict['nodes'].append(main_user)
-
+        
+	global offset
+	offset = 0 
+    
 	if target_label == 'Protected':
         
 		with open('static/json_file.json', 'w') as json_file:
@@ -437,7 +438,7 @@ def json_graph(account):
     
 	users = api.friends(screen_name = account, count = 1)
     
-	# Considers friend or friend
+	# Considers friends of friend
 	for i in range(len(users)):
         
 		tweet_text = []
@@ -454,6 +455,7 @@ def json_graph(account):
         
 		if exists == False:
                 
+                
 			f_users = []
             
 			tweets_var = "Unavailable"
@@ -463,14 +465,16 @@ def json_graph(account):
 			if (api.get_user(screen_name = users[i]._json['screen_name'])._json['protected']) == False:
             
 				tweet_text = []
-				retweet_rate, tweet_rate, label = tweets(name['screen_name'], 'friends', tweet_text)
+				retweet_rate, tweet_rate, label = tweets(name['screen_name'], 'friends', tweet_text, protected)
 				print(label)
 				f_users.append(name['screen_name'])
 				f_users.append(label)
                 
 				tweets_var = round(tweet_rate, 2)
 				retweets_var = round(retweet_rate, 2)
-
+                    
+           
+        
 				if label == 'Human':
 					humans += 1
 					result_human.append(f_users)
@@ -499,7 +503,9 @@ def json_graph(account):
     
             
 			counter += 1
-
+        
+        
+    
 			temp_links = {
 				"source" : 0,
 				"target" : target
@@ -531,16 +537,20 @@ def json_graph(account):
 		friends_list = api.friends(screen_name = users[i]._json['screen_name'], count = 1)
             
 		increm = 0
-
+            
+       
 		for j in range(len(friends_list)):
 			name_inner = api.get_user(screen_name = friends_list[j]._json['screen_name'])._json
 			print("\t\t%s" % (friends_list[j]._json['screen_name']))
- 
+
+              
 			tweet_text = []
                 
 			existng_node_id, exists = check(name_inner['screen_name'], json_dict)
         
 			if exists == False:
+                
+                    
 				f_users = []
                 
 				tweets_var = "Unavailable"
@@ -550,7 +560,7 @@ def json_graph(account):
 				if (api.get_user(screen_name = friends_list[j]._json['screen_name'])._json['protected']) == False:
                     
 					tweet_text = []
-					retweet_rate, tweet_rate, label = tweets(name_inner['screen_name'], 'friends', tweet_text)
+					retweet_rate, tweet_rate, label = tweets(name_inner['screen_name'], 'friends', tweet_text, protected)
 					print(label)
 					f_users.append(name_inner['screen_name'])
 					f_users.append(label)
@@ -569,7 +579,7 @@ def json_graph(account):
                         
 				else:
 					print("-----User not available-----")
-
+       
 				temp_nodes = {
 					"node_id" : counter,
 					"followers_count" : name_inner['followers_count'],
@@ -584,18 +594,20 @@ def json_graph(account):
 				}
             
 				counter += 1
-
+            
+            
 				temp_links = {
 					"source" : USED,
 					"target" : target
 					}
-
-				print("---%d\t%d---" % (i+1+friend_size, target))
+                
             
 				target += 1
                     
 				json_dict['nodes'].append(temp_nodes)
-
+                    
+                    
+            
 			else:
 				temp_links = {
 					"source" : USED,
@@ -603,12 +615,12 @@ def json_graph(account):
 					}
                 
 			json_dict['links'].append(temp_links)
-			friend_size += len(users)
- 
+              
+		offset += 1
+        
+                
 		json_dict['links'].append(temp_links)
         
-		friend_size += len(friends_list)
-
 	with open('static/json_file.json', 'w') as json_file:
 		json.dump(json_dict, json_file)
 	json_file.close()
@@ -628,6 +640,7 @@ def check(name, dictionary):
     return existing_node_id, exists
     
 
+# function determines tweet and retweet rates of user within last 30 days
 def rates(account):
     d = datetime.datetime.now() - timedelta(days=30)
 
@@ -680,10 +693,7 @@ def rates(account):
    
         
     return retweet_rate, tweet_rate
-
-
    
-    
 # Define web app name
 app = Flask(__name__)
 
@@ -693,7 +703,7 @@ consumer_secret = "VWy2nay4Fpvd9LcC91KyxGpcjtw840K1RsRMSvz8deXBJEPck0"
 access_key = "1208029993504260098-RH50AOCuFjGmbIMZuWvaHUhtU0skpx"
 access_secret = "wxeVFihwLf88wbwpMcGtVtTGwmERcvYwr41Wxj276HwhO"
     
-# Authorize twitter, initialize tweepy
+#authorize twitter, initialize tweepy
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_key, access_secret)
 api = tweepy.API(auth,wait_on_rate_limit=True, wait_on_rate_limit_notify=True
@@ -701,8 +711,8 @@ api = tweepy.API(auth,wait_on_rate_limit=True, wait_on_rate_limit_notify=True
 
 class ReviewForm(Form):
     moviereview = TextAreaField('', [validators.DataRequired(), validators.length(max=15)])
-	
-# Prevents web app from caching data e.g. static data file
+
+# Prevents web app from caching data e.g. static data files	
 @app.after_request
 def add_header(r):
     """
@@ -718,9 +728,10 @@ def add_header(r):
 # Web app landing page
 @app.route('/')
 def index():
+
     form = ReviewForm(request.form)
 
-    data = ["Enter a Twitter account username (e.g. @username) to be analyzed", 
+    data = ["Enter a Twitter account username without the '@' symbol (e.g. BarackObama) to be analyzed", 
             "Select the 'Predict' option first to understand the areas of a Twitter that exhibit signs of 'bot' behaviour. Scores closer to 0 indicate human behaviour and scores closer to 1 indicate bot behaviour",
             "The 'Graph' option can then be selected and displays the immediate following network of the provided account"]
     
@@ -730,24 +741,21 @@ def index():
 # Network graph page
 @app.route('/graph', methods=['GET','POST'])
 def graph():
+
+	global target_screen_name
     
-	import json
-	import pandas as pd
-	
-	
-	
-	review =request.get_data(as_text=True)[8:]
-	print(predict_button)
+	review = request.get_data(as_text=True)[8:]
+
 	print('name entered to graph: %s\t target screen_name: %s' % (review,target_screen_name))
-	if (predict_button == True) and (review != target_screen_name):
+
+	if (review != target_screen_name) and (target_screen_name == ''):
 		text = "Please enter the same target account that was previously provided for the Prediction."
 		return render_template('reviewform_updated.html', prediction_text=text)
 	
-	elif predict_button == False:
+	elif review != target_screen_name:
 		text = "Please select the 'Predict' button first for the provided target account."
 		return render_template('reviewform_updated.html', prediction_text=text)
-		
-	
+
 	humans, bots, result_bot, result_human, human_content, bot_content= json_graph(review)
     
 	print("before loading of static file")
@@ -755,10 +763,7 @@ def graph():
 		users = json.load(f)
 	f.close()
 	print("after loading of static file")
-	
-	tmp = []
 
-	
 	humans_num = 0
 	bots_num = 0
 	
@@ -770,27 +775,18 @@ def graph():
         
 	elif review in result_bot:
 		bots_num = bots_num - 1
-    
-	if target in result_human:
-		print(target + " recognised as human")
-		humans_num = humans_num - 1
-        
-	elif target in result_bot:
-		print(target + " recognised as bot")
-		bots_num = bots_num - 1
         
 	df_fox_human = pd.DataFrame(data=result_human, columns=['Account', 'Classification'])
 	df_fox_bot = pd.DataFrame(data=result_bot, columns=['Account', 'Classification'])
-       
+
+	target_screen_name = ''
+        
 	print("before render_template call")   
 	return render_template('graph_updated.html',humans=humans_num,bots=bots_num,table1 = df_fox_human.to_html(classes='male', index=False), table2 = df_fox_bot.to_html(classes='female', index=False), tables=[df_fox_human.to_html(classes='male', index=False), df_fox_bot.to_html(classes='female', index=False)]) 
 
 # @FoxNews network graph
 @app.route('/fox_example', methods=['POST'])
 def fox_example():
-    
-    import json
-    import pandas as pd
 
     with open('static/FOX_9_6_4.json') as f:
         foxnews = json.load(f)
@@ -808,7 +804,8 @@ def fox_example():
     
         tmp.append(foxnews['nodes'][i]['screen_name'])
         tmp.append(foxnews['nodes'][i]['label'])
-
+    
+       
         if (foxnews['nodes'][i]['label'] == 'Bot') or (foxnews['nodes'][i]['label'] == '{bot}'):
     
             final_bot.append(tmp)
@@ -827,15 +824,12 @@ def fox_example():
         
     df_fox_human = pd.DataFrame(data=final_human, columns=['Account', 'Classification'])
     df_fox_bot = pd.DataFrame(data=final_bot, columns=['Account', 'Classification'])
-  
+   
     return render_template('fox_example.html',humans=humans_num,bots=bots_num,table1 = df_fox_human.to_html(classes='male', index=False), table2 = df_fox_bot.to_html(classes='female', index=False), tables=[df_fox_human.to_html(classes='male', index=False), df_fox_bot.to_html(classes='female', index=False)]) 
 
 # @MSNBC network graph
 @app.route('/msnbc_example', methods=['POST'])
 def msnbc_example():
-    
-    import json
-    import pandas as pd
 
     with open('static/MSNBC_9_6_4.json') as f:
         msnbc = json.load(f)
@@ -872,26 +866,63 @@ def msnbc_example():
         
     df_fox_human = pd.DataFrame(data=final_human, columns=['Account', 'Classification'])
     df_fox_bot = pd.DataFrame(data=final_bot, columns=['Account', 'Classification'])
-     
+       
     return render_template('msnbc_example.html',humans=humans_num,bots=bots_num,table1 = df_fox_human.to_html(classes='male', index=False), table2 = df_fox_bot.to_html(classes='female', index=False), tables=[df_fox_human.to_html(classes='male', index=False), df_fox_bot.to_html(classes='female', index=False)]) 
 
 # Classification output for targte account provived page
 @app.route('/results', methods=['GET','POST'])
 def results():
-
-	tweet_text = []
-
+    
 	review =request.get_data(as_text=True)[8:]
 	print(review)
-	target, y, proba, account_score, sentiment_score, activity_score, interactiveness_score, tweet_source_score = tweets(review, 'result', tweet_text)
+
+	try:
+		result = api.get_user(screen_name = review)._json
+	except tweepy.TweepError as error:
+		# exception if entered string is not a valid Twitter username
+		text = 'User not found. Please enter another Twitter username.'
+		
+		# excpetion if entered string is a valid username but the account has been suspended
+		if error.api_code == 63:
+			text = 'User has been suspended. Classification is not possible.'
+		# exception if Twitter API call rate has been exceeded
+		elif error.api_code == 403:
+			text = 'API rate limit reached. Please try again later.'
+		
+		return render_template('reviewform_updated.html', prediction_text=text)
+
+	global target_screen_name
+
+	target_screen_name = review
     
+	result = api.get_user(screen_name = review)._json
+    
+	global target_followers_count
+	global target_friends_count
+	global target_id
+	global target_name
+
+    
+	target_followers_count = result['followers_count']
+	target_friends_count = result['friends_count']
+	target_id = result['id']
+	target_name = result['name']
+    
+	protected = result['protected']
+    
+	tweet_text = []
+    
+	target, y, proba, account_score, sentiment_score, activity_score, interactiveness_score, tweet_source_score = tweets(review, 'result', tweet_text, protected)
+           
 	data = [['Target Account', target],['Classification', y], ['Classification Score', proba], ['Account Score', account_score], ['Tweet Text Score', sentiment_score], ['Network Score', activity_score], ['Interaction Score', interactiveness_score], ['Tweet Source Score', tweet_source_score]]
     
 	df = pd.DataFrame(data=data, columns=['Description','Results'])
+
     
 	print('target screen_name: %s' % target_screen_name)
     
 	return render_template('reviewform_updated.html', prediction_text = df.to_html(index=False))
+                         
 
 
 if __name__ == '__main__':
