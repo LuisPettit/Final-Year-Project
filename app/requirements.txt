@@ -9,7 +9,7 @@ feedfinder2==0.0.4
 feedparser==5.2.1
 Flask==1.1.1
 Flask-Compress==1.4.0
-Flask-Cors==3.0.8
+Flask-Cors==3.0.9
 flask-restplus==0.13.0
 future==0.18.2
 gunicorn==19.9.0
