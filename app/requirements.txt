@@ -48,7 +48,7 @@ texttable==1.6.2
 tinysegmenter==0.3
 tldextract==2.2.2
 tweepy==3.8.0
-urllib3==1.25.8
+urllib3==1.26.5
 vaderSentiment==3.3.1
 Werkzeug==1.0.0
 wget==3.2
